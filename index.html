@@ -544,7 +544,7 @@ function App() {
           .main-header{padding:10px 12px!important;}
           .main-header input{width:100%!important;}
           .search-wrapper{width:100%!important;flex:1!important;}
-          .content-area{padding:10px 12px 14px!important;}
+          .content-area{padding:10px 12px calc(80px + env(safe-area-inset-bottom)) 12px!important;}
           .modal-inner{
             position:fixed!important;
             bottom:0!important;left:0!important;right:0!important;
@@ -760,9 +760,10 @@ function App() {
       <nav className="mobile-bottom-nav" style={{
         display:"none",position:"fixed",bottom:0,left:0,right:0,
         background:"#13151f",borderTop:"1px solid #1e2233",
-        paddingBottom:"env(safe-area-inset-bottom)",
-        zIndex:100,justifyContent:"space-around",alignItems:"center"
+        zIndex:100,justifyContent:"space-around",alignItems:"stretch",
+        flexDirection:"column"
       }}>
+        <div style={{display:"flex",justifyContent:"space-around",alignItems:"center"}}>
         {[
           {tab:"all",icon:D.grid,label:"Tutti"},
           {tab:"low",icon:D.warn,label:"Scorte"},
@@ -795,6 +796,9 @@ function App() {
           </div>
           <span style={{fontSize:10,fontWeight:600}}>Aggiungi</span>
         </button>
+        </div>
+        {/* fills the iPhone home indicator area */}
+        <div style={{height:"env(safe-area-inset-bottom)",background:"#13151f"}}/>
       </nav>
     </div>
   );
