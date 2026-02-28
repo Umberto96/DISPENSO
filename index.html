@@ -540,11 +540,11 @@ function App() {
         @media(max-width:768px){
           .desktop-sidebar{display:none!important;}
           .mobile-bottom-nav{display:flex!important;}
-          .main-content{padding-bottom:calc(56px + env(safe-area-inset-bottom))!important;}
+          .main-content{padding-bottom:calc(44px + env(safe-area-inset-bottom))!important;}
           .main-header{padding:10px 12px!important;padding-top:calc(10px + env(safe-area-inset-top))!important;}
           .main-header input{width:100%!important;}
           .search-wrapper{width:100%!important;flex:1!important;}
-          .content-area{padding:10px 12px calc(72px + env(safe-area-inset-bottom)) 12px!important;}
+          .content-area{padding:10px 12px calc(58px + env(safe-area-inset-bottom)) 12px!important;}
           .modal-inner{
             position:fixed!important;
             bottom:0!important;left:0!important;right:0!important;
@@ -775,8 +775,8 @@ function App() {
           return (
             <button key={tab} onClick={()=>switchTab(tab)} style={{
               flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
-              gap:3,padding:"10px 4px",background:"none",border:"none",cursor:"pointer",
-              color:active?"#7d9cf8":"#4a5270",minHeight:56,transition:"color .15s"
+              gap:2,padding:"5px 4px",background:"none",border:"none",cursor:"pointer",
+              color:active?"#7d9cf8":"#4a5270",minHeight:44,transition:"color .15s"
             }}>
               {isHash
                 ? <span style={{fontSize:18,fontWeight:700,lineHeight:1,color:active?"#4c6ef5":"#3a4060"}}>#</span>
@@ -789,8 +789,8 @@ function App() {
         })}
         <button onClick={()=>setModal("add")} style={{
           flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
-          gap:3,padding:"10px 4px",background:"none",border:"none",cursor:"pointer",
-          color:"#4c6ef5",minHeight:56
+          gap:2,padding:"5px 4px",background:"none",border:"none",cursor:"pointer",
+          color:"#4c6ef5",minHeight:44
         }}>
           <div style={{width:32,height:32,borderRadius:8,background:"#4c6ef5",display:"flex",alignItems:"center",justifyContent:"center"}}>
             <Ic d={D.plus} size={18} color="#fff"/>
