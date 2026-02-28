@@ -13,11 +13,7 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body, #root { height: 100%; overflow: hidden; }
-    body {
-      background: #0f1117;
-      font-family: 'DM Sans', sans-serif;
-      padding-top: env(safe-area-inset-top);
-    }
+    body { background: #0f1117; font-family: 'DM Sans', sans-serif; }
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #2e3244; border-radius: 3px; }
@@ -545,7 +541,7 @@ function App() {
           .desktop-sidebar{display:none!important;}
           .mobile-bottom-nav{display:flex!important;}
           .main-content{padding-bottom:calc(60px + env(safe-area-inset-bottom))!important;}
-          .main-header{padding:10px 12px!important;padding-top:calc(10px + env(safe-area-inset-top))!important;}
+          .main-header{padding:10px 12px!important;}
           .main-header input{width:100%!important;}
           .search-wrapper{width:100%!important;flex:1!important;}
           .content-area{padding:10px 12px calc(80px + env(safe-area-inset-bottom)) 12px!important;}
@@ -737,7 +733,7 @@ function App() {
       {drawerOpen&&(
         <div onClick={()=>setDrawerOpen(false)} className="mobile-drawer-overlay" style={{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",zIndex:200,backdropFilter:"blur(3px)"}}>
           <div onClick={e=>e.stopPropagation()} style={{position:"fixed",left:0,top:0,bottom:0,width:"80vw",maxWidth:320,background:"#13151f",borderRight:"1px solid #1e2233",display:"flex",flexDirection:"column",zIndex:201,overflowY:"auto",paddingBottom:"env(safe-area-inset-bottom)"}}>
-            <div style={{padding:"20px 16px 10px",paddingTop:"calc(20px + env(safe-area-inset-top))",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{padding:"20px 16px 10px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <div style={{fontSize:18,fontWeight:700,color:"#dde1f0"}}>Posizioni</div>
               <button onClick={()=>setDrawerOpen(false)} style={{background:"none",border:"none",cursor:"pointer",color:"#5a6080",fontSize:22,padding:4}}>×</button>
             </div>
@@ -801,7 +797,8 @@ function App() {
           <span style={{fontSize:10,fontWeight:600}}>Aggiungi</span>
         </button>
         </div>
-        <div style={{height:"env(safe-area-inset-bottom)",minHeight:0,background:"#13151f",flexShrink:0}}/>
+        {/* fills the iPhone home indicator area */}
+        <div style={{height:"env(safe-area-inset-bottom)",background:"#13151f"}}/>
       </nav>
     </div>
   );
