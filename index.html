@@ -13,7 +13,11 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body, #root { height: 100%; overflow: hidden; }
-    body { background: #0f1117; font-family: 'DM Sans', sans-serif; }
+    body {
+      background: #0f1117;
+      font-family: 'DM Sans', sans-serif;
+      padding-top: env(safe-area-inset-top);
+    }
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #2e3244; border-radius: 3px; }
@@ -526,7 +530,7 @@ function App() {
   };
 
   return (
-    <div style={{display:"flex",height:"100dvh",fontFamily:"'DM Sans',sans-serif",background:"#0f1117",color:"#dde1f0",overflow:"hidden"}}>
+    <div style={{display:"flex",height:"100vh",fontFamily:"'DM Sans',sans-serif",background:"#0f1117",color:"#dde1f0",overflow:"hidden"}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
         *{box-sizing:border-box;margin:0;padding:0;}
@@ -540,11 +544,11 @@ function App() {
         @media(max-width:768px){
           .desktop-sidebar{display:none!important;}
           .mobile-bottom-nav{display:flex!important;}
-          .main-content{padding-bottom:calc(56px + env(safe-area-inset-bottom))!important;}
+          .main-content{padding-bottom:calc(60px + env(safe-area-inset-bottom))!important;}
           .main-header{padding:10px 12px!important;padding-top:calc(10px + env(safe-area-inset-top))!important;}
           .main-header input{width:100%!important;}
           .search-wrapper{width:100%!important;flex:1!important;}
-          .content-area{padding:10px 12px calc(72px + env(safe-area-inset-bottom)) 12px!important;}
+          .content-area{padding:10px 12px calc(80px + env(safe-area-inset-bottom)) 12px!important;}
           .modal-inner{
             position:fixed!important;
             bottom:0!important;left:0!important;right:0!important;
@@ -761,8 +765,7 @@ function App() {
         display:"none",position:"fixed",bottom:0,left:0,right:0,
         background:"#13151f",borderTop:"1px solid #1e2233",
         zIndex:100,justifyContent:"space-around",alignItems:"stretch",
-        flexDirection:"column",
-        paddingBottom:"env(safe-area-inset-bottom)"
+        flexDirection:"column"
       }}>
         <div style={{display:"flex",justifyContent:"space-around",alignItems:"center"}}>
         {[
@@ -798,6 +801,7 @@ function App() {
           <span style={{fontSize:10,fontWeight:600}}>Aggiungi</span>
         </button>
         </div>
+        <div style={{height:"env(safe-area-inset-bottom)",minHeight:0,background:"#13151f",flexShrink:0}}/>
       </nav>
     </div>
   );
