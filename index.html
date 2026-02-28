@@ -526,7 +526,7 @@ function App() {
   };
 
   return (
-    <div style={{display:"flex",height:"100vh",fontFamily:"'DM Sans',sans-serif",background:"#0f1117",color:"#dde1f0",overflow:"hidden"}}>
+    <div style={{display:"flex",height:"100dvh",fontFamily:"'DM Sans',sans-serif",background:"#0f1117",color:"#dde1f0",overflow:"hidden"}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
         *{box-sizing:border-box;margin:0;padding:0;}
@@ -540,11 +540,11 @@ function App() {
         @media(max-width:768px){
           .desktop-sidebar{display:none!important;}
           .mobile-bottom-nav{display:flex!important;}
-          .main-content{padding-bottom:calc(60px + env(safe-area-inset-bottom))!important;}
-          .main-header{padding:10px 12px!important;}
+          .main-content{padding-bottom:calc(56px + env(safe-area-inset-bottom))!important;}
+          .main-header{padding:10px 12px!important;padding-top:calc(10px + env(safe-area-inset-top))!important;}
           .main-header input{width:100%!important;}
           .search-wrapper{width:100%!important;flex:1!important;}
-          .content-area{padding:10px 12px calc(80px + env(safe-area-inset-bottom)) 12px!important;}
+          .content-area{padding:10px 12px calc(72px + env(safe-area-inset-bottom)) 12px!important;}
           .modal-inner{
             position:fixed!important;
             bottom:0!important;left:0!important;right:0!important;
@@ -733,7 +733,7 @@ function App() {
       {drawerOpen&&(
         <div onClick={()=>setDrawerOpen(false)} className="mobile-drawer-overlay" style={{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",zIndex:200,backdropFilter:"blur(3px)"}}>
           <div onClick={e=>e.stopPropagation()} style={{position:"fixed",left:0,top:0,bottom:0,width:"80vw",maxWidth:320,background:"#13151f",borderRight:"1px solid #1e2233",display:"flex",flexDirection:"column",zIndex:201,overflowY:"auto",paddingBottom:"env(safe-area-inset-bottom)"}}>
-            <div style={{padding:"20px 16px 10px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{padding:"20px 16px 10px",paddingTop:"calc(20px + env(safe-area-inset-top))",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <div style={{fontSize:18,fontWeight:700,color:"#dde1f0"}}>Posizioni</div>
               <button onClick={()=>setDrawerOpen(false)} style={{background:"none",border:"none",cursor:"pointer",color:"#5a6080",fontSize:22,padding:4}}>×</button>
             </div>
@@ -761,7 +761,8 @@ function App() {
         display:"none",position:"fixed",bottom:0,left:0,right:0,
         background:"#13151f",borderTop:"1px solid #1e2233",
         zIndex:100,justifyContent:"space-around",alignItems:"stretch",
-        flexDirection:"column"
+        flexDirection:"column",
+        paddingBottom:"env(safe-area-inset-bottom)"
       }}>
         <div style={{display:"flex",justifyContent:"space-around",alignItems:"center"}}>
         {[
@@ -797,8 +798,6 @@ function App() {
           <span style={{fontSize:10,fontWeight:600}}>Aggiungi</span>
         </button>
         </div>
-        {/* fills the iPhone home indicator area */}
-        <div style={{height:"env(safe-area-inset-bottom)",background:"#13151f"}}/>
       </nav>
     </div>
   );
