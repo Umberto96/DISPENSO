@@ -6,25 +6,35 @@
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <meta name="apple-mobile-web-app-title" content="Dispensa"/>
-  <meta name="theme-color" content="#13151f"/>
-  <title>Dispensa</title>
-  <link rel="manifest" href="manifest.json"/>
-  <link rel="apple-touch-icon" href="icon-180.png"/>
+  <meta name="theme-color" content="#0f1117"/>
+  <link rel="manifest" href="/manifest.json"/>
+  <link rel="apple-touch-icon" href="/icon-192.png"/>
+  <title>Dispensa di Casa</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body, #root { height: 100%; height: 100dvh; }
-    body { background: #0f1117; overflow: hidden; }
+    html, body, #root { height: 100%; overflow: hidden; }
+    body { background: #0f1117; font-family: 'DM Sans', sans-serif; }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #2e3244; border-radius: 3px; }
+    input:focus, select:focus, textarea:focus {
+      border-color: #4c6ef5 !important;
+      box-shadow: 0 0 0 2px #4c6ef514;
+    }
+    button { font-family: 'DM Sans', sans-serif; }
+    button:hover { opacity: 0.8; }
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
   </style>
 </head>
 <body>
-  <div id="root"></div>
+<div id="root"></div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 
-  <script type="text/babel" data-presets="react">
-    const { useState, useEffect, useMemo } = React;
+<script type="text/babel">
+const { useState, useEffect, useMemo } = React;
 
 
 /* ── persistence ── */
@@ -150,8 +160,8 @@ const S = {
 /* ── components ── */
 function Modal({ children, onClose, width=500 }) {
   return (
-    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:300,backdropFilter:"blur(4px)"}}>
-      <div onClick={e=>e.stopPropagation()} style={{background:"#161920",border:"1px solid #2e3244",borderRadius:12,padding:28,width:`min(${width}px,95vw)`,maxHeight:"90vh",overflowY:"auto",boxShadow:"0 28px 70px rgba(0,0,0,.55)"}}>
+    <div onClick={onClose} className="modal-outer" style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:300,backdropFilter:"blur(4px)"}}>
+      <div onClick={e=>e.stopPropagation()} className="modal-inner" style={{background:"#161920",border:"1px solid #2e3244",borderRadius:12,padding:28,width:`min(${width}px,95vw)`,maxHeight:"90vh",overflowY:"auto",boxShadow:"0 28px 70px rgba(0,0,0,.55)"}}>
         {children}
       </div>
     </div>
@@ -452,7 +462,6 @@ function App() {
   const [delId,setDelId]=useState(null);
   const [showSettings,setShowSettings]=useState(false);
   const [view,setView]=useState("grid");
-  const [sidebarOpen,setSidebarOpen]=useState(false);
 
   const flatLocs = useMemo(()=>flattenPaths(locTree),[locTree]);
   const locMap = useMemo(()=>{const m={};flatLocs.forEach(l=>m[l.id]=l.path);return m;},[flatLocs]);
@@ -504,6 +513,18 @@ function App() {
 
   const breadcrumb = selTag ? `#${selTag}` : showTagPage ? "Tag" : selLocId ? (flatLocs.find(f=>f.id===selLocId)?.path||"") : "Tutti gli alimenti";
 
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [mobileTab, setMobileTab] = useState("all"); // all | low | tags | locations
+
+  // sync mobileTab with existing filters
+  const switchTab = (tab) => {
+    setMobileTab(tab);
+    if(tab==="all"){setSelLocId(null);setShowLow(false);setSelTag(null);setShowTagPage(false);}
+    else if(tab==="low"){setShowLow(true);setSelTag(null);setSelLocId(null);setShowTagPage(false);}
+    else if(tab==="tags"){setShowTagPage(true);setSelTag(null);setSelLocId(null);setShowLow(false);}
+    else if(tab==="locations"){setDrawerOpen(true);}
+  };
+
   return (
     <div style={{display:"flex",height:"100vh",fontFamily:"'DM Sans',sans-serif",background:"#0f1117",color:"#dde1f0",overflow:"hidden"}}>
       <style>{`
@@ -515,15 +536,38 @@ function App() {
         input:focus,select:focus,textarea:focus{border-color:#4c6ef5!important;box-shadow:0 0 0 2px #4c6ef514;}
         button{font-family:'DM Sans',sans-serif;}
         button:hover{opacity:.8;}
+        /* ── MOBILE ── */
+        @media(max-width:768px){
+          .desktop-sidebar{display:none!important;}
+          .mobile-bottom-nav{display:flex!important;}
+          .main-content{padding-bottom:calc(60px + env(safe-area-inset-bottom))!important;}
+          .main-header{padding:10px 12px!important;}
+          .main-header input{width:100%!important;}
+          .search-wrapper{width:100%!important;flex:1!important;}
+          .content-area{padding:10px 12px 14px!important;}
+          .modal-inner{
+            position:fixed!important;
+            bottom:0!important;left:0!important;right:0!important;
+            top:auto!important;
+            width:100%!important;
+            max-width:100%!important;
+            border-radius:16px 16px 0 0!important;
+            max-height:92vh!important;
+            padding-bottom:calc(20px + env(safe-area-inset-bottom))!important;
+          }
+          .modal-outer{align-items:flex-end!important;}
+          .grid-cards{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))!important;}
+          .mobile-title{display:block!important;}
+        }
+        @media(min-width:769px){
+          .mobile-bottom-nav{display:none!important;}
+          .mobile-drawer-overlay{display:none!important;}
+        }
       `}</style>
 
-      {sidebarOpen&&<div onClick={()=>setSidebarOpen(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.55)",zIndex:99,backdropFilter:"blur(2px)"}}/>}
       {/* SIDEBAR */}
-      <aside style={{width:260,background:"#13151f",borderRight:"1px solid #1e2233",display:"flex",flexDirection:"column",flexShrink:0,overflow:"hidden",position:"fixed",top:0,left:0,height:"100%",zIndex:100,transform:sidebarOpen?"translateX(0)":"translateX(-100%)",transition:"transform .25s cubic-bezier(.4,0,.2,1)",boxShadow:sidebarOpen?"6px 0 32px rgba(0,0,0,.5)":"none"}}>
-        <div style={{display:"flex",justifyContent:"flex-end",padding:"10px 10px 0",flexShrink:0}}>
-          <button onClick={()=>setSidebarOpen(false)} style={{background:"none",border:"none",cursor:"pointer",color:"#3a4060",padding:6,display:"flex",alignItems:"center"}}><Ic d={D.close} size={16}/></button>
-        </div>
-        <div style={{padding:"4px 16px 12px"}}>
+      <aside className="desktop-sidebar" style={{width:240,background:"#13151f",borderRight:"1px solid #1e2233",display:"flex",flexDirection:"column",flexShrink:0,overflow:"hidden"}}>
+        <div style={{padding:"22px 16px 12px"}}>
           <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.18em",color:"#4c6ef5",marginBottom:4}}>Gestione Casa</div>
           <div style={{fontSize:22,fontWeight:700,color:"#dde1f0",letterSpacing:"-0.02em"}}>Dispensa</div>
           <div style={{fontSize:12,color:"#2e3a5a",marginTop:3}}>{items.length} alimenti registrati</div>
@@ -563,19 +607,16 @@ function App() {
       </aside>
 
       {/* MAIN */}
-      <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <div className="main-content" style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
         {/* Top bar */}
-        <header style={{padding:"11px 14px",borderBottom:"1px solid #1e2233",display:"flex",gap:10,alignItems:"center",background:"#13151f"}}>
-          <button onClick={()=>setSidebarOpen(o=>!o)} style={{background:"none",border:"none",cursor:"pointer",color:"#7b82a0",padding:"6px 4px",display:"flex",flexDirection:"column",gap:4,flexShrink:0}}>
-            <span style={{display:"block",width:18,height:2,background:"currentColor",borderRadius:2,transition:"background .15s"}}/>
-            <span style={{display:"block",width:18,height:2,background:"currentColor",borderRadius:2,transition:"background .15s"}}/>
-            <span style={{display:"block",width:18,height:2,background:"currentColor",borderRadius:2,transition:"background .15s"}}/>
-          </button>
-          <div style={{position:"relative",flex:1,minWidth:0}}>
+        <header className="main-header" style={{padding:"11px 18px",borderBottom:"1px solid #1e2233",display:"flex",gap:10,alignItems:"center",background:"#13151f",flexWrap:"wrap"}}>
+          <div className="mobile-title" style={{fontSize:18,fontWeight:700,color:"#dde1f0",letterSpacing:"-0.02em",display:"none"}}>🏠 Dispensa</div>
+          <div className="search-wrapper" style={{position:"relative",width:260,flexShrink:0}}>
             <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:"#4a5270"}}><Ic d={D.search} size={14}/></span>
             <input style={{...S.inp({paddingLeft:32})}} placeholder="Cerca nome o tag…" value={search} onChange={e=>setSearch(e.target.value)}/>
             {search&&<button onClick={()=>setSearch("")} style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:"#5a6080",fontSize:18}}>×</button>}
           </div>
+          <div style={{flex:1}}/>
           <div style={{display:"flex",background:"#1a1d27",borderRadius:7,border:"1px solid #2e3244",overflow:"hidden",flexShrink:0}}>
             {["grid","list"].map(v=>(
               <button key={v} onClick={()=>setView(v)} style={{padding:"7px 10px",background:view===v?"#252a3d":"none",border:"none",cursor:"pointer",color:view===v?"#dde1f0":"#5a6080"}}>
@@ -599,7 +640,7 @@ function App() {
         </div>
 
         {/* Content */}
-        <main style={{flex:1,overflowY:"auto",padding:"14px 18px 28px"}}>
+        <main className="content-area" style={{flex:1,overflowY:"auto",padding:"14px 18px 28px"}}>
           {/* TAG PAGE */}
           {showTagPage&&!selTag?(
             usedTags.length===0?(
@@ -644,7 +685,7 @@ function App() {
             filtered.length===0?(
               <div style={{textAlign:"center",color:"#2e3a5a",marginTop:80,fontSize:16}}>Nessun alimento trovato.</div>
             ):view==="grid"?(
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(228px,1fr))",gap:12}}>
+              <div className="grid-cards" style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(228px,1fr))",gap:12}}>
                 {filtered.map(item=>(
                   <GridCard key={item.id} item={item} locationLabel={locMap[item.locationId]||"—"}
                     onEdit={()=>setModal(item)} onDelete={()=>setDelId(item.id)} onQty={d=>adjustQty(item.id,d)}/>
@@ -687,21 +728,88 @@ function App() {
           onTagAdd={tagAdd} onTagDelete={tagDelete}
           onClose={()=>setShowSettings(false)}/>
       )}
+
+      {/* MOBILE LOCATION DRAWER */}
+      {drawerOpen&&(
+        <div onClick={()=>setDrawerOpen(false)} className="mobile-drawer-overlay" style={{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",zIndex:200,backdropFilter:"blur(3px)"}}>
+          <div onClick={e=>e.stopPropagation()} style={{position:"fixed",left:0,top:0,bottom:0,width:"80vw",maxWidth:320,background:"#13151f",borderRight:"1px solid #1e2233",display:"flex",flexDirection:"column",zIndex:201,overflowY:"auto",paddingBottom:"env(safe-area-inset-bottom)"}}>
+            <div style={{padding:"20px 16px 10px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{fontSize:18,fontWeight:700,color:"#dde1f0"}}>Posizioni</div>
+              <button onClick={()=>setDrawerOpen(false)} style={{background:"none",border:"none",cursor:"pointer",color:"#5a6080",fontSize:22,padding:4}}>×</button>
+            </div>
+            <div style={{padding:"0 10px",flex:1,overflowY:"auto"}}>
+              <div onClick={()=>{setSelLocId(null);setShowLow(false);setSelTag(null);setShowTagPage(false);setDrawerOpen(false);setMobileTab("all");}} style={{display:"flex",alignItems:"center",gap:7,padding:"10px 8px",borderRadius:6,cursor:"pointer",background:"transparent",color:"#6878a0",marginBottom:1}}>
+                <Ic d={D.grid} size={14} color="#2e3a60"/>
+                <span style={{flex:1,fontSize:14}}>Tutti gli alimenti</span>
+                <span style={{fontSize:10,background:"#1a1d27",color:"#3a4a70",padding:"1px 6px",borderRadius:8}}>{items.length}</span>
+              </div>
+              <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",color:"#1e2a4a",padding:"10px 8px 5px"}}>Posizioni</div>
+              <FolderTree nodes={locTree} items={items} selectedId={selLocId}
+                onSelect={id=>{setSelLocId(id===selLocId?null:id);setShowLow(false);setSelTag(null);setShowTagPage(false);setDrawerOpen(false);setMobileTab("locations");}}/>
+            </div>
+            <div style={{padding:"10px",borderTop:"1px solid #1e2233"}}>
+              <button onClick={()=>{setShowSettings(true);setDrawerOpen(false);}} style={{width:"100%",display:"flex",alignItems:"center",gap:8,background:"none",border:"none",cursor:"pointer",color:"#4a5270",padding:"10px",borderRadius:6,fontSize:13,minHeight:44}}>
+                <Ic d={D.settings} size={14}/> Impostazioni
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MOBILE BOTTOM NAV */}
+      <nav className="mobile-bottom-nav" style={{
+        display:"none",position:"fixed",bottom:0,left:0,right:0,
+        background:"#13151f",borderTop:"1px solid #1e2233",
+        paddingBottom:"env(safe-area-inset-bottom)",
+        zIndex:100,justifyContent:"space-around",alignItems:"center"
+      }}>
+        {[
+          {tab:"all",icon:D.grid,label:"Tutti"},
+          {tab:"low",icon:D.warn,label:"Scorte"},
+          {tab:"tags",icon:null,label:"Tag",isHash:true},
+          {tab:"locations",icon:D.folder,label:"Posizioni"},
+        ].map(({tab,icon,label,isHash})=>{
+          const active = tab==="locations" ? !!selLocId : (tab==="all"&&!selLocId&&!showLow&&!showTagPage) || (tab==="low"&&showLow) || (tab==="tags"&&showTagPage);
+          return (
+            <button key={tab} onClick={()=>switchTab(tab)} style={{
+              flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
+              gap:3,padding:"10px 4px",background:"none",border:"none",cursor:"pointer",
+              color:active?"#7d9cf8":"#4a5270",minHeight:56,transition:"color .15s"
+            }}>
+              {isHash
+                ? <span style={{fontSize:18,fontWeight:700,lineHeight:1,color:active?"#4c6ef5":"#3a4060"}}>#</span>
+                : <Ic d={icon} size={20} color={active?"#7d9cf8":"#3a4060"}/>
+              }
+              <span style={{fontSize:10,fontWeight:active?600:400}}>{label}</span>
+              {tab==="low"&&lowCount>0&&<span style={{position:"absolute",top:8,fontSize:9,background:"#f5a623",color:"#000",borderRadius:8,padding:"1px 4px",fontWeight:700}}>{lowCount}</span>}
+            </button>
+          );
+        })}
+        <button onClick={()=>setModal("add")} style={{
+          flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
+          gap:3,padding:"10px 4px",background:"none",border:"none",cursor:"pointer",
+          color:"#4c6ef5",minHeight:56
+        }}>
+          <div style={{width:32,height:32,borderRadius:8,background:"#4c6ef5",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <Ic d={D.plus} size={18} color="#fff"/>
+          </div>
+          <span style={{fontSize:10,fontWeight:600}}>Aggiungi</span>
+        </button>
+      </nav>
     </div>
   );
 }
 
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(React.createElement(App));
-  </script>
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
 
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js');
-      });
-    }
-  </script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+</script>
 </body>
 </html>
