@@ -76,7 +76,13 @@ function useFirebase(key, def) {
       unsub = window.__onValue__(dbRef, snap => {
         if (cancelled) return;
         const data = snap.val();
+        // Se il db è vuoto (null) usa i default E segna come ready
         setValState(data !== null && data !== undefined ? data : def);
+        setReady(true);
+      }, (error) => {
+        // Anche in caso di errore, segna ready con i default
+        console.error("Firebase error:", error);
+        setValState(def);
         setReady(true);
       });
     };
@@ -516,6 +522,14 @@ function App() {
   const [tags,    setTags,    tagsReady]    = useFirebase("tags",    DEFAULT_TAGS);
   const syncReady = itemsReady && locTreeReady && tagsReady;
 
+  // Timeout di sicurezza: se dopo 6s non si connette, mostra l'app comunque
+  const [forceReady, setForceReady] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setForceReady(true), 6000);
+    return () => clearTimeout(t);
+  }, []);
+  const appReady = syncReady || forceReady;
+
   const [search,setSearch]=useState("");
   const [selTag,setSelTag]=useState(null);       // tag selected WITHIN the tag page
   const [showTagPage,setShowTagPage]=useState(false); // "Tag" page open
@@ -629,7 +643,7 @@ function App() {
       `}</style>
 
       {/* LOADING iniziale */}
-      {!syncReady && (
+      {!appReady && (
         <div style={{position:"fixed",inset:0,background:"#0f1117",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",zIndex:9999,gap:16}}>
           <div style={{fontSize:40}}>🏠</div>
           <div style={{fontSize:14,color:"#5a6080"}}>Connessione a Firebase…</div>
