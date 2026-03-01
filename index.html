@@ -33,17 +33,68 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBZbE9KO3Ku4paZK3b4gZbd5xY_ukaB-A8",
+    authDomain: "dispenso-2aa11.firebaseapp.com",
+    databaseURL: "https://dispenso-2aa11-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "dispenso-2aa11",
+    storageBucket: "dispenso-2aa11.firebasestorage.app",
+    messagingSenderId: "888240634833",
+    appId: "1:888240634833:web:afeb1df0fee8e144bdbef0",
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+  window.__DB__      = db;
+  window.__ref__     = ref;
+  window.__onValue__ = onValue;
+  window.__set__     = set;
+  window.dispatchEvent(new Event("firebase-ready"));
+</script>
+
 <script type="text/babel">
 const { useState, useEffect, useMemo } = React;
 
+/* ── persistence: Firebase realtime sync ── */
+function useFirebase(key, def) {
+  const [val, setValState] = useState(def);
+  const [ready, setReady] = useState(false);
 
-/* ── persistence ── */
-function useLS(key, def) {
-  const [val, setVal] = useState(() => {
-    try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : def; } catch { return def; }
-  });
-  useEffect(() => { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }, [key, val]);
-  return [val, setVal];
+  useEffect(() => {
+    const init = () => {
+      const dbRef = window.__ref__(window.__DB__, `dispensa/${key}`);
+      const unsub = window.__onValue__(dbRef, snap => {
+        const data = snap.val();
+        setValState(data !== null && data !== undefined ? data : def);
+        setReady(true);
+      });
+      return unsub;
+    };
+
+    let unsub;
+    if (window.__DB__) {
+      unsub = init();
+    } else {
+      const handler = () => { unsub = init(); };
+      window.addEventListener("firebase-ready", handler, { once: true });
+      return () => window.removeEventListener("firebase-ready", handler);
+    }
+    return () => { if (unsub) unsub(); };
+  }, [key]);
+
+  const setVal = (newValOrFn) => {
+    setValState(prev => {
+      const next = typeof newValOrFn === "function" ? newValOrFn(prev) : newValOrFn;
+      window.__set__(window.__ref__(window.__DB__, `dispensa/${key}`), next).catch(console.error);
+      return next;
+    });
+  };
+
+  return [val, setVal, ready];
 }
 
 /* ── tree helpers ── */
@@ -449,9 +500,10 @@ function ListRow({ item, locationLabel, onEdit, onDelete, onQty }) {
 
 /* ── MAIN ── */
 function App() {
-  const [items,setItems]=useLS("dp2-items",DEFAULT_ITEMS);
-  const [locTree,setLocTree]=useLS("dp2-loctree",DEFAULT_LOCATIONS);
-  const [tags,setTags]=useLS("dp2-tags",DEFAULT_TAGS);
+  const [items,   setItems,   itemsReady]   = useFirebase("items",   DEFAULT_ITEMS);
+  const [locTree, setLocTree, locTreeReady] = useFirebase("loctree", DEFAULT_LOCATIONS);
+  const [tags,    setTags,    tagsReady]    = useFirebase("tags",    DEFAULT_TAGS);
+  const syncReady = itemsReady && locTreeReady && tagsReady;
 
   const [search,setSearch]=useState("");
   const [selTag,setSelTag]=useState(null);       // tag selected WITHIN the tag page
@@ -540,11 +592,11 @@ function App() {
         @media(max-width:768px){
           .desktop-sidebar{display:none!important;}
           .mobile-bottom-nav{display:flex!important;}
-          .main-content{padding-bottom:calc(44px + env(safe-area-inset-bottom))!important;}
+          .main-content{padding-bottom:calc(56px + env(safe-area-inset-bottom))!important;}
           .main-header{padding:10px 12px!important;padding-top:calc(10px + env(safe-area-inset-top))!important;}
           .main-header input{width:100%!important;}
           .search-wrapper{width:100%!important;flex:1!important;}
-          .content-area{padding:10px 12px calc(58px + env(safe-area-inset-bottom)) 12px!important;}
+          .content-area{padding:10px 12px calc(72px + env(safe-area-inset-bottom)) 12px!important;}
           .modal-inner{
             position:fixed!important;
             bottom:0!important;left:0!important;right:0!important;
@@ -565,12 +617,29 @@ function App() {
         }
       `}</style>
 
+      {/* LOADING iniziale */}
+      {!syncReady && (
+        <div style={{position:"fixed",inset:0,background:"#0f1117",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",zIndex:9999,gap:16}}>
+          <div style={{fontSize:40}}>🏠</div>
+          <div style={{fontSize:14,color:"#5a6080"}}>Connessione a Firebase…</div>
+          <div style={{width:120,height:3,background:"#1e2233",borderRadius:2,overflow:"hidden"}}>
+            <div style={{width:"40%",height:"100%",background:"#4c6ef5",borderRadius:2,animation:"fbload 1s ease-in-out infinite alternate"}}/>
+          </div>
+          <style>{`@keyframes fbload{from{margin-left:0}to{margin-left:60%}}`}</style>
+        </div>
+      )}
+
       {/* SIDEBAR */}
       <aside className="desktop-sidebar" style={{width:240,background:"#13151f",borderRight:"1px solid #1e2233",display:"flex",flexDirection:"column",flexShrink:0,overflow:"hidden"}}>
         <div style={{padding:"22px 16px 12px"}}>
           <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.18em",color:"#4c6ef5",marginBottom:4}}>Gestione Casa</div>
           <div style={{fontSize:22,fontWeight:700,color:"#dde1f0",letterSpacing:"-0.02em"}}>Dispensa</div>
-          <div style={{fontSize:12,color:"#2e3a5a",marginTop:3}}>{items.length} alimenti registrati</div>
+          <div style={{fontSize:12,color:"#2e3a5a",marginTop:3,display:"flex",alignItems:"center",gap:5}}>
+            {items.length} alimenti
+            <span title="Sincronizzato con Firebase" style={{display:"inline-flex",alignItems:"center",gap:3,fontSize:10,color:"#3ecf8e"}}>
+              <span style={{width:6,height:6,borderRadius:"50%",background:"#3ecf8e",display:"inline-block"}}/>live
+            </span>
+          </div>
         </div>
 
         <nav style={{flex:1,overflowY:"auto",padding:"6px 10px"}}>
@@ -775,8 +844,8 @@ function App() {
           return (
             <button key={tab} onClick={()=>switchTab(tab)} style={{
               flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
-              gap:2,padding:"5px 4px",background:"none",border:"none",cursor:"pointer",
-              color:active?"#7d9cf8":"#4a5270",minHeight:44,transition:"color .15s"
+              gap:3,padding:"10px 4px",background:"none",border:"none",cursor:"pointer",
+              color:active?"#7d9cf8":"#4a5270",minHeight:56,transition:"color .15s"
             }}>
               {isHash
                 ? <span style={{fontSize:18,fontWeight:700,lineHeight:1,color:active?"#4c6ef5":"#3a4060"}}>#</span>
@@ -789,8 +858,8 @@ function App() {
         })}
         <button onClick={()=>setModal("add")} style={{
           flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
-          gap:2,padding:"5px 4px",background:"none",border:"none",cursor:"pointer",
-          color:"#4c6ef5",minHeight:44
+          gap:3,padding:"10px 4px",background:"none",border:"none",cursor:"pointer",
+          color:"#4c6ef5",minHeight:56
         }}>
           <div style={{width:32,height:32,borderRadius:8,background:"#4c6ef5",display:"flex",alignItems:"center",justifyContent:"center"}}>
             <Ic d={D.plus} size={18} color="#fff"/>
