@@ -53,6 +53,8 @@
   window.__ref__     = ref;
   window.__onValue__ = onValue;
   window.__set__     = set;
+  window.__FIREBASE_READY__ = true;
+  // Notifica React (potrebbe già essere in ascolto, o arrivare dopo)
   window.dispatchEvent(new Event("firebase-ready"));
 </script>
 
@@ -65,25 +67,34 @@ function useFirebase(key, def) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    let unsub = null;
+    let cancelled = false;
+
     const init = () => {
+      if (cancelled) return;
       const dbRef = window.__ref__(window.__DB__, `dispensa/${key}`);
-      const unsub = window.__onValue__(dbRef, snap => {
+      unsub = window.__onValue__(dbRef, snap => {
+        if (cancelled) return;
         const data = snap.val();
         setValState(data !== null && data !== undefined ? data : def);
         setReady(true);
       });
-      return unsub;
     };
 
-    let unsub;
-    if (window.__DB__) {
-      unsub = init();
+    if (window.__FIREBASE_READY__) {
+      init();
     } else {
-      const handler = () => { unsub = init(); };
-      window.addEventListener("firebase-ready", handler, { once: true });
-      return () => window.removeEventListener("firebase-ready", handler);
+      // Polling ogni 100ms finché Firebase non è pronto (gestisce race condition)
+      const poll = setInterval(() => {
+        if (window.__FIREBASE_READY__) {
+          clearInterval(poll);
+          init();
+        }
+      }, 100);
+      return () => { cancelled = true; clearInterval(poll); if (unsub) unsub(); };
     }
-    return () => { if (unsub) unsub(); };
+
+    return () => { cancelled = true; if (unsub) unsub(); };
   }, [key]);
 
   const setVal = (newValOrFn) => {
