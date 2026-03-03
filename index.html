@@ -182,6 +182,13 @@ const DEFAULT_LOCATIONS = [
 
 const DEFAULT_TAGS = ["pasta","riso","legumi","cereali","conserve","latticini","carne","pesce","verdura","frutta","dolci","bevande","spezie","condimenti","surgelati"];
 
+const DEFAULT_OWNERS = [
+  { id: "o1", name: "Umberto", color: "#4c6ef5" },
+  { id: "o2", name: "Alessia", color: "#e05294" },
+  { id: "o3", name: "Comune",  color: "#3ecf8e" },
+];
+const OWNER_COLORS = ["#4c6ef5","#e05294","#3ecf8e","#f5a623","#e05252","#9b59b6","#1abc9c","#e67e22"];
+
 const DEFAULT_ITEMS = [
   { id: 1, name: "Pasta Barilla", quantity: 3, unit: "confezioni", locationId: "l2", tags: ["pasta","cereali"], notes: "" },
   { id: 2, name: "Olio EVO", quantity: 1, unit: "bottiglie", locationId: "l1a", tags: ["condimenti"], notes: "Extravergine" },
@@ -382,9 +389,9 @@ function LocationEditor({ nodes, onAdd, onRename, onDelete }) {
 }
 
 /* ── Item Form ── */
-function ItemForm({ initial, locationTree, tags, onSave, onCancel }) {
+function ItemForm({ initial, locationTree, tags, owners, onSave, onCancel }) {
   const flatLocs = useMemo(()=>flattenPaths(locationTree),[locationTree]);
-  const [form,setForm] = useState(initial||{name:"",quantity:1,unit:"confezioni",locationId:flatLocs[0]?.id||"",tags:[],notes:""});
+  const [form,setForm] = useState(initial||{name:"",quantity:1,unit:"confezioni",locationId:flatLocs[0]?.id||"",tags:[],notes:"",ownerId:""});
   const [newTag,setNewTag] = useState("");
   const set = (k,v)=>setForm(f=>({...f,[k]:v}));
   const toggleTag = t=>set("tags",form.tags.includes(t)?form.tags.filter(x=>x!==t):[...form.tags,t]);
@@ -402,6 +409,17 @@ function ItemForm({ initial, locationTree, tags, onSave, onCancel }) {
       <select style={S.inp()} value={form.locationId} onChange={e=>set("locationId",e.target.value)}>
         {flatLocs.map(l=><option key={l.id} value={l.id}>{l.path}</option>)}
       </select>
+      <Lbl>Proprietario</Lbl>
+      <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:4}}>
+        <button onClick={()=>set("ownerId","")} style={{padding:"6px 14px",borderRadius:20,border:`2px solid ${!form.ownerId?"#dde1f0":"#2e3244"}`,background:!form.ownerId?"#2e3244":"transparent",color:!form.ownerId?"#dde1f0":"#5a6080",fontSize:12,fontWeight:500,cursor:"pointer",fontFamily:"DM Sans,sans-serif"}}>
+          Nessuno
+        </button>
+        {owners.map(o=>(
+          <button key={o.id} onClick={()=>set("ownerId",o.id)} style={{padding:"6px 14px",borderRadius:20,border:`2px solid ${form.ownerId===o.id?o.color:"#2e3244"}`,background:form.ownerId===o.id?o.color+"22":"transparent",color:form.ownerId===o.id?o.color:"#5a6080",fontSize:12,fontWeight:500,cursor:"pointer",fontFamily:"DM Sans,sans-serif",transition:"all .15s"}}>
+            {o.name}
+          </button>
+        ))}
+      </div>
       <Lbl>Tag</Lbl>
       <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:8}}>
         {tags.map(t=><TagPill key={t} label={t} active={form.tags.includes(t)} onClick={()=>toggleTag(t)} small/>)}
@@ -422,9 +440,11 @@ function ItemForm({ initial, locationTree, tags, onSave, onCancel }) {
 }
 
 /* ── Settings Modal ── */
-function SettingsModal({ locationTree, tags, onLocAdd, onLocRename, onLocDelete, onTagAdd, onTagDelete, onClose }) {
+function SettingsModal({ locationTree, tags, owners, onLocAdd, onLocRename, onLocDelete, onTagAdd, onTagDelete, onOwnerAdd, onOwnerDelete, onClose }) {
   const [tab,setTab] = useState("loc");
   const [newTag,setNewTag] = useState("");
+  const [newOwnerName,setNewOwnerName] = useState("");
+  const [newOwnerColor,setNewOwnerColor] = useState(OWNER_COLORS[0]);
   return (
     <Modal onClose={onClose} width={560}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
@@ -432,7 +452,7 @@ function SettingsModal({ locationTree, tags, onLocAdd, onLocRename, onLocDelete,
         <button onClick={onClose} style={S.btn("icon")}><Ic d={D.close}/></button>
       </div>
       <div style={{display:"flex",gap:4,marginBottom:20,background:"#1a1d27",borderRadius:8,padding:4}}>
-        {[["loc","📂 Posizioni"],["tags","🏷 Tag"]].map(([k,l])=>(
+        {[["loc","📂 Posizioni"],["tags","🏷 Tag"],["owners","👤 Proprietari"]].map(([k,l])=>(
           <button key={k} onClick={()=>setTab(k)} style={{flex:1,padding:"7px",border:"none",borderRadius:6,fontFamily:"'DM Sans',sans-serif",fontSize:13,fontWeight:500,cursor:"pointer",background:tab===k?"#252a3d":"transparent",color:tab===k?"#7d9cf8":"#5a6080"}}>
             {l}
           </button>
@@ -459,24 +479,54 @@ function SettingsModal({ locationTree, tags, onLocAdd, onLocRename, onLocDelete,
           </div>
         </div>
       )}
+      {tab==="owners"&&(
+        <div>
+          <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
+            {owners.map(o=>(
+              <div key={o.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:8,background:"#1a1d27",border:`1px solid ${o.color}44`}}>
+                <div style={{width:14,height:14,borderRadius:"50%",background:o.color,flexShrink:0}}/>
+                <span style={{flex:1,fontSize:14,fontWeight:500,color:"#dde1f0"}}>{o.name}</span>
+                <button onClick={()=>onOwnerDelete(o.id)} style={S.btn("icon")}><Ic d={D.trash} size={13} color="#e05252"/></button>
+              </div>
+            ))}
+          </div>
+          <div style={{display:"flex",gap:8,alignItems:"center"}}>
+            <input style={{...S.inp({flex:1})}} value={newOwnerName} onChange={e=>setNewOwnerName(e.target.value)}
+              placeholder="Nome proprietario…"
+              onKeyDown={e=>e.key==="Enter"&&newOwnerName.trim()&&(onOwnerAdd(newOwnerName.trim(),newOwnerColor),setNewOwnerName(""))}/>
+            <div style={{display:"flex",gap:4,flexShrink:0}}>
+              {OWNER_COLORS.map(c=>(
+                <div key={c} onClick={()=>setNewOwnerColor(c)} style={{width:20,height:20,borderRadius:"50%",background:c,cursor:"pointer",border:`2px solid ${newOwnerColor===c?"#fff":"transparent"}`,transition:"border .15s"}}/>
+              ))}
+            </div>
+            <button onClick={()=>{if(newOwnerName.trim()){onOwnerAdd(newOwnerName.trim(),newOwnerColor);setNewOwnerName("");}}} style={S.btn("primary",{flexShrink:0})}>Aggiungi</button>
+          </div>
+        </div>
+      )}
     </Modal>
   );
 }
 
 /* ── Grid Card ── */
-function GridCard({ item, locationLabel, onEdit, onDelete, onQty }) {
+function GridCard({ item, locationLabel, onEdit, onDelete, onQty, ownerColor, ownerName }) {
   const empty=item.quantity===0; const low=!empty&&item.quantity<=2;
+  const borderCol = ownerColor ? ownerColor+"55" : (empty?"#e0525222":low?"#f5a62322":"#22263a");
+  const accentBar = ownerColor || (empty?"#e05252":low?"#f5a623":"#22263a");
   return (
-    <div style={{background:"#161920",border:`1px solid ${empty?"#e0525222":low?"#f5a62322":"#22263a"}`,borderRadius:10,padding:16,transition:"border-color .18s"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+    <div style={{background:"#161920",border:`1px solid ${borderCol}`,borderRadius:10,padding:16,transition:"border-color .18s",position:"relative",overflow:"hidden"}}>
+      {ownerColor&&<div style={{position:"absolute",top:0,left:0,right:0,height:3,background:ownerColor,borderRadius:"10px 10px 0 0"}}/>}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10,marginTop:ownerColor?4:0}}>
         <div style={{minWidth:0,flex:1}}>
           <div style={{fontSize:11,color:"#4c6ef5",marginBottom:3,fontWeight:500,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>📂 {locationLabel}</div>
           <div style={{fontSize:16,fontWeight:600,color:"#dde1f0",lineHeight:1.25,wordBreak:"break-word"}}>{item.name}</div>
           {item.notes&&<div style={{fontSize:12,color:"#5a6080",marginTop:2}}>{item.notes}</div>}
         </div>
-        <div style={{display:"flex",gap:1,marginLeft:8,flexShrink:0}}>
-          <button onClick={onEdit} style={S.btn("icon")}><Ic d={D.edit} size={13}/></button>
-          <button onClick={onDelete} style={S.btn("icon")}><Ic d={D.trash} size={13} color="#e05252"/></button>
+        <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:4,marginLeft:8,flexShrink:0}}>
+          {ownerName&&<span style={{fontSize:10,fontWeight:600,color:ownerColor,background:ownerColor+"18",padding:"2px 7px",borderRadius:10,whiteSpace:"nowrap"}}>{ownerName}</span>}
+          <div style={{display:"flex",gap:1}}>
+            <button onClick={onEdit} style={S.btn("icon")}><Ic d={D.edit} size={13}/></button>
+            <button onClick={onDelete} style={S.btn("icon")}><Ic d={D.trash} size={13} color="#e05252"/></button>
+          </div>
         </div>
       </div>
       <div style={{margin:"12px 0 10px"}}><QtyBar value={item.quantity} unit={item.unit} onChange={v=>onQty(v-item.quantity)}/></div>
@@ -488,14 +538,18 @@ function GridCard({ item, locationLabel, onEdit, onDelete, onQty }) {
 }
 
 /* ── List Row ── */
-function ListRow({ item, locationLabel, onEdit, onDelete, onQty }) {
+function ListRow({ item, locationLabel, onEdit, onDelete, onQty, ownerColor, ownerName }) {
   const empty=item.quantity===0; const low=!empty&&item.quantity<=2;
   const col=empty?"#e05252":low?"#f5a623":"#dde1f0";
+  const borderCol = ownerColor ? ownerColor+"55" : (empty?"#e0525218":"#22263a");
   return (
-    <div style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:8,background:"#161920",border:`1px solid ${empty?"#e0525218":"#22263a"}`}}>
+    <div style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:8,background:"#161920",border:`1px solid ${borderCol}`,borderLeft:`3px solid ${ownerColor||borderCol}`}}>
       <div style={{flex:2,minWidth:0}}>
         <div style={{fontSize:14,fontWeight:500,color:"#dde1f0",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{item.name}</div>
-        <div style={{fontSize:11,color:"#5a6080",marginTop:1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>📂 {locationLabel}{item.notes?" · "+item.notes:""}</div>
+        <div style={{fontSize:11,color:"#5a6080",marginTop:1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+          📂 {locationLabel}{item.notes?" · "+item.notes:""}
+          {ownerName&&<span style={{marginLeft:6,color:ownerColor,fontWeight:600}}>· {ownerName}</span>}
+        </div>
       </div>
       <div style={{display:"flex",gap:4,flex:1,overflow:"hidden"}}>
         {item.tags.slice(0,3).map(t=><TagPill key={t} label={t} small/>)}
@@ -520,7 +574,8 @@ function App() {
   const [items,   setItems,   itemsReady]   = useFirebase("items",   DEFAULT_ITEMS);
   const [locTree, setLocTree, locTreeReady] = useFirebase("loctree", DEFAULT_LOCATIONS);
   const [tags,    setTags,    tagsReady]    = useFirebase("tags",    DEFAULT_TAGS);
-  const syncReady = itemsReady && locTreeReady && tagsReady;
+  const [owners,  setOwners,  ownersReady]  = useFirebase("owners",  DEFAULT_OWNERS);
+  const syncReady = itemsReady && locTreeReady && tagsReady && ownersReady;
 
   // Timeout di sicurezza: se dopo 6s non si connette, mostra l'app comunque
   const [forceReady, setForceReady] = useState(false);
@@ -586,6 +641,10 @@ function App() {
   };
 
   const tagAdd=t=>{if(!tags.includes(t))setTags(p=>[...p,t]);};
+  const ownerAdd=(name,color)=>setOwners(p=>[...p,{id:"o"+Date.now(),name,color}]);
+  const ownerDelete=id=>setOwners(p=>p.filter(o=>o.id!==id));
+  const ownerColor=id=>{const o=owners.find(o=>o.id===id);return o?o.color:"#5a6080";};
+  const ownerName=id=>{const o=owners.find(o=>o.id===id);return o?o.name:null;};
   const tagDelete=t=>setTags(p=>p.filter(x=>x!==t));
 
   const breadcrumb = selTag ? `#${selTag}` : showTagPage ? "Tag" : selLocId ? (flatLocs.find(f=>f.id===selLocId)?.path||"") : "Tutti gli alimenti";
@@ -782,14 +841,16 @@ function App() {
               <div className="grid-cards" style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(228px,1fr))",gap:12}}>
                 {filtered.map(item=>(
                   <GridCard key={item.id} item={item} locationLabel={locMap[item.locationId]||"—"}
-                    onEdit={()=>setModal(item)} onDelete={()=>setDelId(item.id)} onQty={d=>adjustQty(item.id,d)}/>
+                    onEdit={()=>setModal(item)} onDelete={()=>setDelId(item.id)} onQty={d=>adjustQty(item.id,d)}
+                    ownerColor={item.ownerId?ownerColor(item.ownerId):null} ownerName={ownerName(item.ownerId)}/>
                 ))}
               </div>
             ):(
               <div style={{display:"flex",flexDirection:"column",gap:4}}>
                 {filtered.map(item=>(
                   <ListRow key={item.id} item={item} locationLabel={locMap[item.locationId]||"—"}
-                    onEdit={()=>setModal(item)} onDelete={()=>setDelId(item.id)} onQty={d=>adjustQty(item.id,d)}/>
+                    onEdit={()=>setModal(item)} onDelete={()=>setDelId(item.id)} onQty={d=>adjustQty(item.id,d)}
+                    ownerColor={item.ownerId?ownerColor(item.ownerId):null} ownerName={ownerName(item.ownerId)}/>
                 ))}
               </div>
             )
@@ -800,7 +861,7 @@ function App() {
       {/* MODALS */}
       {modal&&(
         <Modal onClose={()=>setModal(null)}>
-          <ItemForm initial={modal==="add"?null:modal} locationTree={locTree} tags={tags} onSave={saveItem} onCancel={()=>setModal(null)}/>
+          <ItemForm initial={modal==="add"?null:modal} locationTree={locTree} tags={tags} owners={owners} onSave={saveItem} onCancel={()=>setModal(null)}/>
         </Modal>
       )}
       {delId&&(
@@ -817,9 +878,10 @@ function App() {
         </Modal>
       )}
       {showSettings&&(
-        <SettingsModal locationTree={locTree} tags={tags}
+        <SettingsModal locationTree={locTree} tags={tags} owners={owners}
           onLocAdd={locAdd} onLocRename={locRename} onLocDelete={locDelete}
           onTagAdd={tagAdd} onTagDelete={tagDelete}
+          onOwnerAdd={ownerAdd} onOwnerDelete={ownerDelete}
           onClose={()=>setShowSettings(false)}/>
       )}
 
